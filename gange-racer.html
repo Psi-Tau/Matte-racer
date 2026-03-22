@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>gange-racer - Sertifikat og Bilspill</title>
+    <title>Matte-racer - Sertifikat og Bilspill</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
@@ -71,6 +71,16 @@
             <p class="text-gray-500 mb-6 font-medium">Velg din utfordring!</p>
             
             <div class="grid gap-3">
+                <!-- Nivåvalg øverst -->
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <button onclick="setLevel(1)" class="p-5 bg-blue-50 border-2 border-blue-100 text-blue-700 rounded-2xl font-bold hover:bg-blue-100 transition-all">
+                        Nivå 1<br><span class="text-[10px] font-normal opacity-60">Knapper / Valg</span>
+                    </button>
+                    <button onclick="setLevel(2)" class="p-5 bg-purple-50 border-2 border-purple-100 text-purple-700 rounded-2xl font-bold hover:bg-purple-100 transition-all">
+                        Nivå 2<br><span class="text-[10px] font-normal opacity-60">Skriv svaret</span>
+                    </button>
+                </div>
+
                 <!-- Gangetester -->
                 <div class="bg-blue-50 p-4 rounded-2xl border-2 border-blue-100 mb-2">
                     <span class="text-xs font-bold text-blue-400 uppercase tracking-widest block mb-3">Gangetesten ⏱️</span>
@@ -87,15 +97,6 @@
                     </div>
                     <span class="text-4xl">🏎️</span>
                 </button>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="setLevel(1)" class="p-5 bg-white border-2 border-slate-100 text-slate-700 rounded-2xl font-bold hover:border-blue-300 transition-all">
-                        Nivå 1<br><span class="text-[10px] font-normal opacity-60">Knapper / Valg</span>
-                    </button>
-                    <button onclick="setLevel(2)" class="p-5 bg-white border-2 border-slate-100 text-slate-700 rounded-2xl font-bold hover:border-purple-300 transition-all">
-                        Nivå 2<br><span class="text-[10px] font-normal opacity-60">Skriv svaret</span>
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -103,8 +104,8 @@
         <div id="setup-screen" class="hidden">
             <button onclick="showScreen('level')" class="text-sm text-gray-400 mb-6 hover:underline">← Tilbake</button>
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Velg område</h2>
-            <div class="grid gap-3">
-                <button onclick="startMode('odd')" class="p-4 bg-orange-400 text-white rounded-2xl font-bold hover:bg-orange-500 transition">Hvem skal ut? 🧩</button>
+            <div class="grid gap-3" id="mode-selection-list">
+                <button id="btn-odd-mode" onclick="startMode('odd')" class="p-4 bg-orange-400 text-white rounded-2xl font-bold hover:bg-orange-500 transition">Hvem skal ut? 🧩</button>
                 <button onclick="showScreen('nSelect')" class="p-4 bg-white border-2 border-slate-100 hover:border-blue-400 rounded-2xl font-semibold transition">En bestemt tabell</button>
                 <button onclick="startMode('1-5')" class="p-4 bg-green-500 text-white rounded-2xl font-bold hover:bg-green-600 transition">Liten tabell (1-5)</button>
                 <button onclick="startMode('5-10')" class="p-4 bg-blue-500 text-white rounded-2xl font-bold hover:bg-blue-600 transition">Stor tabell (5-10)</button>
@@ -227,7 +228,8 @@
             },
             canvas: document.getElementById('road-canvas'),
             input: document.getElementById('answer-input'),
-            heatmap: document.getElementById('heatmap')
+            heatmap: document.getElementById('heatmap'),
+            oddBtn: document.getElementById('btn-odd-mode')
         };
 
         function init() {
@@ -252,7 +254,6 @@
         }
 
         function forceExit() {
-            // Stopper alt og går til hovedmeny umiddelbart
             state.gameActive = false;
             if (state.timerInterval) clearInterval(state.timerInterval);
             if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
@@ -260,7 +261,6 @@
         }
 
         function showScreen(key) {
-            // Sikrer at alle timere stoppes ved skjermbytte
             if (key !== 'play' && key !== 'car') {
                 state.gameActive = false;
                 if (state.timerInterval) clearInterval(state.timerInterval);
@@ -273,10 +273,14 @@
 
         function setLevel(lvl) {
             state.level = lvl;
+            if (lvl === 2) {
+                dom.oddBtn.classList.add('hidden');
+            } else {
+                dom.oddBtn.classList.remove('hidden');
+            }
             showScreen('setup');
         }
 
-        // --- GANGTESTEN (1 / 10 min) ---
         function startTimedExam(seconds) {
             showScreen('play');
             state.timeLeft = seconds;
@@ -293,7 +297,6 @@
             document.getElementById('timer-label').innerText = "Tid igjen";
             document.getElementById('timer-display').innerText = formatTime(state.timeLeft);
 
-            // Fjern gammel intervall hvis den finnes
             if (state.timerInterval) clearInterval(state.timerInterval);
 
             state.timerInterval = setInterval(() => {
@@ -343,7 +346,6 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // --- OPPGAVELOGIKK ---
         function generateClassicProblem() {
             let a, b, isOdd = state.mode === 'odd';
             
@@ -447,7 +449,6 @@
             handleClassicAnswer(dom.input.value, null);
         }
 
-        // --- BILSSPILL ---
         let lanes = [];
         function startCarGame() {
             showScreen('car');
@@ -549,7 +550,6 @@
             ctx.fillStyle = "#1e293b"; ctx.fillRect(state.car.x-14, cy+5, 28, 12);
         }
 
-        // --- VERKTØY ---
         function endGame() {
             state.gameActive = false;
             if (state.timerInterval) clearInterval(state.timerInterval);
