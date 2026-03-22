@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dele-racer | Matte-moro for 4-6 klasse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f0fdf4;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        #road-canvas {
+            background: #334155;
+            display: block;
+            border-radius: 1.5rem;
+            width: 100%;
+            max-height: 400px;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .heat-cell {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            border-radius: 6px;
+            transition: transform 0.2s;
+        }
+
+        .confetti-piece {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -20px;
+            z-index: 100;
+            opacity: 0;
+            animation: fall 3s linear forwards;
+        }
+
+        @keyframes fall {
+            0% { opacity: 1; top: -5%; transform: translateX(0) rotate(0deg); }
+            100% { opacity: 0; top: 100%; transform: translateX(100px) rotate(360deg); }
+        }
+
+        /* Skjul scrollbar for en renere look */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container" class="w-full max-w-2xl bg-white rounded-[2.5rem] p-6 md:p-10 card text-center relative overflow-hidden border-4 border-green-100">
+        
+        <div id="level-screen">
+            <div class="mb-6">
+                <span class="bg-green-100 text-green-600 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">Matte-spill</span>
+                <h1 class="text-6xl font-black text-green-600 mt-2 italic tracking-tighter">DELE-RACER 🏎️</h1>
+            </div>
+            
+            <div class="grid gap-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="setLevel(1)" class="group p-6 bg-green-50 border-2 border-green-100 text-green-700 rounded-3xl font-bold hover:bg-green-600 hover:text-white transition-all">
+                        <span class="text-2xl block mb-1">Nivå 1</span>
+                        <span class="text-xs font-medium opacity-70 group-hover:opacity-100 uppercase">Valgknapper</span>
+                    </button>
+                    <button onclick="setLevel(2)" class="group p-6 bg-emerald-50 border-2 border-emerald-100 text-emerald-700 rounded-3xl font-bold hover:bg-emerald-600 hover:text-white transition-all">
+                        <span class="text-2xl block mb-1">Nivå 2</span>
+                        <span class="text-xs font-medium opacity-70 group-hover:opacity-100 uppercase">Skriv svaret</span>
+                    </button>
+                </div>
+
+                <div class="bg-slate-50 p-5 rounded-3xl border-2 border-slate-100">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-4">Hurtigtest mot klokka ⏱️</span>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="startTimedExam(60)" class="py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-bold hover:shadow-lg transition">1 Minutt</button>
+                        <button onclick="startTimedExam(300)" class="py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-bold hover:shadow-lg transition">5 Minutter</button>
+                    </div>
+                </div>
+
+                <button onclick="startCarGame()" class="w-full p-8 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 text-white rounded-3xl font-black transition-all flex items-center justify-between shadow-xl active:scale-95 group">
+                    <div class="text-left">
+                        <span class="text-3xl block leading-tight">BILSPILLET!</span>
+                        <span class="text-xs font-medium opacity-90">STYR MELLOM RIKTIGE SVAR</span>
+                    </div>
+                    <span class="text-5xl group-hover:rotate-12 transition-transform">🏎️</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="setup-screen" class="hidden">
+            <button onclick="showScreen('level')" class="text-sm font-bold text-slate-400 mb-8 hover:text-green-500 flex items-center justify-center gap-2 mx-auto uppercase tracking-widest">
+                <span>←</span> Tilbake til meny
+            </button>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-8">Hva vil du dele på?</h2>
+            <div class="grid gap-4" id="mode-selection-list">
+                <button onclick="showScreen('nSelect')" class="p-5 bg-white border-4 border-slate-50 hover:border-green-400 rounded-[2rem] font-bold text-xl text-slate-700 transition-all">Velg ett bestemt tall</button>
+                <button onclick="startMode('1-5')" class="p-5 bg-green-500 text-white rounded-[2rem] font-bold text-xl hover:bg-green-600 shadow-lg transition-all">Lave tall (1-5)</button>
+                <button onclick="startMode('6-10')" class="p-5 bg-emerald-600 text-white rounded-[2rem] font-bold text-xl hover:bg-emerald-700 shadow-lg transition-all">Høye tall (6-10)</button>
+                <button onclick="startMode('random')" class="p-5 bg-blue-600 text-white rounded-[2rem] font-bold text-xl hover:bg-blue-700 shadow-lg transition-all">Full blanding!</button>
+            </div>
+        </div>
+
+        <div id="n-selector" class="hidden">
+            <h2 class="text-3xl font-extrabold mb-10 text-slate-800">Velg dele-tabell</h2>
+            <div class="grid grid-cols-5 gap-3 mb-10" id="n-buttons"></div>
+            <button onclick="showScreen('setup')" class="text-slate-400 font-bold uppercase tracking-widest hover:text-slate-600">Avbryt</button>
+        </div>
+
+        <div id="play-screen" class="hidden">
+            <div class="flex justify-between items-end mb-10">
+                <div class="text-left">
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Score</p>
+                    <span id="score-display" class="text-4xl font-black text-green-600">0</span>
+                </div>
+                <div class="bg-slate-100 h-4 flex-grow mx-6 rounded-full overflow-hidden border-2 border-white shadow-inner">
+                    <div id="progress-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="text-right">
+                    <p id="timer-label" class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Oppgave</p>
+                    <span id="timer-display" class="text-4xl font-black text-orange-500">0</span>
+                </div>
+            </div>
+
+            <div id="question-box" class="py-16 bg-slate-50 rounded-[3rem] border-4 border-white shadow-inner mb-10 relative">
+                <div class="text-8xl font-black text-slate-800 tracking-tighter" id="math-problem">20 : 5</div>
+                <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-8 py-2 rounded-full border-2 border-slate-100 shadow-sm text-xl text-slate-400 font-bold">= ?</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6" id="answer-options"></div>
+
+            <div id="input-container" class="hidden">
+                <input type="number" id="answer-input" inputmode="numeric" placeholder="Svar her" 
+                       class="w-full text-center text-6xl font-black p-8 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] focus:border-green-400 focus:bg-white outline-none transition-all placeholder:text-slate-200">
+                <button onclick="checkInputAnswer()" class="w-full mt-6 py-6 bg-green-600 text-white rounded-[2rem] font-black text-2xl shadow-xl shadow-green-100 active:scale-95 transition-all">SJEKK SVAR ➔</button>
+            </div>
+
+            <button onclick="forceExit()" class="mt-12 text-slate-300 font-bold uppercase text-xs tracking-[0.3em] hover:text-red-400 transition">Avslutt spill</button>
+        </div>
+
+        <div id="car-play-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div class="bg-green-50 px-6 py-2 rounded-2xl border-2 border-green-100">
+                    <span id="car-score" class="text-3xl font-black text-green-600">0</span>
+                </div>
+                <div id="car-lives" class="text-3xl drop-shadow-sm">❤️❤️❤️</div>
+            </div>
+            <div class="relative bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-slate-700">
+                <div id="car-problem-box" class="absolute top-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur px-10 py-3 rounded-full shadow-2xl z-20 border-4 border-green-400">
+                    <span id="car-math-text" class="text-4xl font-black text-slate-800 tracking-tighter">12 : 3</span>
+                </div>
+                <canvas id="road-canvas"></canvas>
+                
+                <div class="absolute bottom-6 left-6 right-6 flex justify-between md:hidden z-30">
+                    <button id="car-btn-left" class="w-24 h-24 bg-white/10 backdrop-blur-md rounded-full border-4 border-white/30 text-white text-5xl font-black active:scale-90">←</button>
+                    <button id="car-btn-right" class="w-24 h-24 bg-white/10 backdrop-blur-md rounded-full border-4 border-white/30 text-white text-5xl font-black active:scale-90">→</button>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">Piltaster for å styre bilen!</p>
+            <button onclick="forceExit()" class="mt-6 text-slate-300 font-bold uppercase text-xs tracking-widest hover:text-red-400">Avslutt</button>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <div id="medal-icon" class="text-8xl mb-4 animate-bounce">🏆</div>
+            <h2 class="text-5xl font-black text-slate-800 mb-2 tracking-tighter">BRA JOBBA!</h2>
+            <p id="final-stats" class="text-xl text-slate-500 mb-10 font-bold"></p>
+            
+            <div class="bg-slate-50 p-8 rounded-[3rem] mb-10 border-4 border-white shadow-inner">
+                <h3 class="text-xs font-black text-slate-400 mb-6 uppercase tracking-[0.2em]">Din styrke i de ulike tabellene</h3>
+                <div id="heatmap" class="grid grid-cols-5 gap-3 max-w-sm mx-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <button onclick="showScreen('level')" class="py-6 bg-slate-100 text-slate-600 rounded-3xl font-black text-xl hover:bg-slate-200 transition">MENY</button>
+                <button id="restart-btn" class="py-6 bg-green-600 text-white rounded-3xl font-black text-xl shadow-xl shadow-green-100 hover:bg-green-700 transition">PRØV IGJEN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init state
+        let state = {
+            mode: '', 
+            level: 1, 
+            n: null, 
+            score: 0, 
+            attempted: 0, 
+            limit: 10,
+            timeLeft: null, 
+            timerInterval: null, 
+            gameActive: false,
+            results: {}, 
+            car: { x: 0, lane: 1, targetX: 0 },
+            obstacles: [], 
+            lives: 3, 
+            speed: 0.5, 
+            roadOffset: 0, 
+            currentProblem: {},
+            animationFrame: null
+        };
+
+        const dom = {
+            screens: {
+                level: document.getElementById('level-screen'),
+                setup: document.getElementById('setup-screen'),
+                nSelect: document.getElementById('n-selector'),
+                play: document.getElementById('play-screen'),
+                car: document.getElementById('car-play-screen'),
+                result: document.getElementById('result-screen')
+            },
+            canvas: document.getElementById('road-canvas'),
+            input: document.getElementById('answer-input'),
+            heatmap: document.getElementById('heatmap')
+        };
+
+        function init() {
+            const nContainer = document.getElementById('n-buttons');
+            for(let i = 1; i <= 10; i++) {
+                const b = document.createElement('button');
+                b.className = "p-5 bg-white border-2 border-slate-100 hover:border-green-500 text-slate-700 rounded-2xl font-black text-xl transition-all hover:-translate-y-1 shadow-sm";
+                b.innerText = `:${i}`;
+                b.onclick = () => startMode('n', i);
+                nContainer.appendChild(b);
+            }
+            dom.input.addEventListener('keypress', (e) => e.key === 'Enter' && checkInputAnswer());
+            
+            window.addEventListener('keydown', (e) => {
+                if (state.gameActive && !dom.screens.car.classList.contains('hidden')) {
+                    if (e.key === 'ArrowLeft') moveCar(-1);
+                    if (e.key === 'ArrowRight') moveCar(1);
+                }
+            });
+            document.getElementById('car-btn-left').onclick = () => moveCar(-1);
+            document.getElementById('car-btn-right').onclick = () => moveCar(1);
+        }
+
+        function forceExit() {
+            state.gameActive = false;
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
+            showScreen('level');
+        }
+
+        function showScreen(key) {
+            Object.values(dom.screens).forEach(s => s.classList.add('hidden'));
+            dom.screens[key].classList.remove('hidden');
+        }
+
+        function setLevel(lvl) {
+            state.level = lvl;
+            showScreen('setup');
+        }
+
+        function startTimedExam(seconds) {
+            showScreen('play');
+            state.timeLeft = seconds;
+            state.mode = 'exam';
+            state.score = 0;
+            state.attempted = 0;
+            state.limit = Infinity;
+            state.gameActive = true;
+            
+            document.getElementById('answer-options').classList.add('hidden');
+            document.getElementById('input-container').classList.remove('hidden');
+            document.getElementById('timer-label').innerText = "Tid igjen";
+
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--;
+                document.getElementById('timer-display').innerText = formatTime(state.timeLeft);
+                if (state.timeLeft <= 0) endGame();
+            }, 1000);
+
+            document.getElementById('restart-btn').onclick = () => startTimedExam(seconds);
+            generateProblem();
+        }
+
+        function startMode(mode, n = null) {
+            showScreen('play');
+            state.mode = mode;
+            state.n = n;
+            state.score = 0;
+            state.attempted = 0;
+            state.limit = 10;
+            state.timeLeft = null;
+            state.gameActive = true;
+
+            if (state.level === 2) {
+                document.getElementById('answer-options').classList.add('hidden');
+                document.getElementById('input-container').classList.remove('hidden');
+            } else {
+                document.getElementById('answer-options').classList.remove('hidden');
+                document.getElementById('input-container').classList.add('hidden');
+            }
+
+            document.getElementById('timer-label').innerText = "Oppgave";
+            document.getElementById('restart-btn').onclick = () => startMode(mode, n);
+            generateProblem();
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function generateProblem() {
+            let divisor, answer;
+            if (state.mode === 'n') divisor = state.n;
+            else if (state.mode === '1-5') divisor = Math.floor(Math.random() * 5) + 1;
+            else if (state.mode === '6-10') divisor = Math.floor(Math.random() * 5) + 6;
+            else divisor = Math.floor(Math.random() * 10) + 1;
+
+            answer = Math.floor(Math.random() * 10) + 1;
+            let dividend = divisor * answer;
+
+            state.currentProblem = { a: dividend, b: divisor, ans: answer, key: divisor };
+            document.getElementById('score-display').innerText = state.score;
+            
+            if (state.timeLeft === null) {
+                document.getElementById('timer-display').innerText = `${state.attempted + 1}/${state.limit}`;
+                document.getElementById('progress-bar').style.width = `${(state.attempted / state.limit) * 100}%`;
+            }
+
+            document.getElementById('math-problem').innerText = `${dividend} : ${divisor}`;
+            renderOptions();
+        }
+
+        function renderOptions() {
+            const container = document.getElementById('answer-options');
+            container.innerHTML = '';
+            if (state.level === 1) {
+                let options = [state.currentProblem.ans];
+                while(options.length < 4) {
+                    let fake = state.currentProblem.ans + (Math.floor(Math.random() * 4) + 1) * (Math.random() > 0.5 ? 1 : -1);
+                    if(fake > 0 && !options.includes(fake)) options.push(fake);
+                }
+                options.sort(() => Math.random() - 0.5).forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "p-8 bg-white border-4 border-slate-50 rounded-[2rem] text-3xl font-black text-slate-700 hover:border-green-400 hover:shadow-lg active:scale-95 transition-all";
+                    btn.innerText = opt;
+                    btn.onclick = () => handleAnswer(opt, btn);
+                    container.appendChild(btn);
+                });
+            } else {
+                dom.input.value = '';
+                setTimeout(() => dom.input.focus(), 50);
+            }
+        }
+
+        function handleAnswer(choice, el) {
+            const isCorrect = choice == state.currentProblem.ans;
+            const key = state.currentProblem.key;
+            if(!state.results[key]) state.results[key] = { correct: 0, total: 0 };
+            state.results[key].total++;
+
+            if(isCorrect) {
+                state.score++;
+                state.results[key].correct++;
+                if(el) el.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                else dom.input.classList.add('border-green-400');
+                state.attempted++;
+                setTimeout(() => {
+                    if (state.timeLeft === null && state.attempted >= state.limit) endGame();
+                    else if (state.gameActive) {
+                        if(!el) dom.input.classList.remove('border-green-400');
+                        generateProblem();
+                    }
+                }, 150);
+            } else {
+                if(el) el.classList.add('shake', 'bg-red-50', 'border-red-500', 'text-red-700');
+                else { dom.input.classList.add('shake', 'border-red-400'); setTimeout(() => dom.input.value = '', 400); }
+                setTimeout(() => { 
+                    if(el) el.classList.remove('shake'); 
+                    if(!el) dom.input.classList.remove('shake', 'border-red-400'); 
+                }, 500);
+            }
+            document.getElementById('score-display').innerText = state.score;
+        }
+
+        function checkInputAnswer() {
+            handleAnswer(dom.input.value, null);
+        }
+
+        // CAR GAME
+        let lanes = [];
+        function startCarGame() {
+            showScreen('car');
+            const ctx = dom.canvas.getContext('2d');
+            dom.canvas.width = dom.canvas.parentElement.clientWidth;
+            dom.canvas.height = 400;
+            lanes = [dom.canvas.width/6, dom.canvas.width/2, (dom.canvas.width/6)*5];
+            
+            state.score = 0; state.lives = 3; state.speed = 0.6; state.obstacles = [];
+            state.car = { x: lanes[1], lane: 1, targetX: lanes[1] };
+            state.gameActive = true;
+            
+            document.getElementById('restart-btn').onclick = startCarGame;
+            newCarProblem();
+            state.animationFrame = requestAnimationFrame(carLoop);
+        }
+
+        function moveCar(dir) {
+            state.car.lane = Math.max(0, Math.min(2, state.car.lane + dir));
+            state.car.targetX = lanes[state.car.lane];
+        }
+
+        function newCarProblem() {
+            let divisor = Math.floor(Math.random() * 9) + 2;
+            let answer = Math.floor(Math.random() * 9) + 1;
+            let dividend = divisor * answer;
+            state.currentProblem = { a: dividend, b: divisor, ans: answer, key: divisor };
+            document.getElementById('car-math-text').innerText = `${dividend} : ${divisor}`;
+            
+            const correctLane = Math.floor(Math.random() * 3);
+            for(let i=0; i<3; i++) {
+                state.obstacles.push({
+                    x: lanes[i], y: -100, 
+                    val: i === correctLane ? answer : answer + (Math.floor(Math.random()*4)+1) * (Math.random() > 0.5 ? 1 : -1),
+                    isCorrect: i === correctLane
+                });
+            }
+            updateCarUI();
+        }
+
+        function carLoop() {
+            if(!state.gameActive) return;
+            updateCar();
+            drawCar();
+            state.animationFrame = requestAnimationFrame(carLoop);
+        }
+
+        function updateCar() {
+            state.roadOffset = (state.roadOffset + (2.5 * state.speed)) % 100;
+            state.car.x += (state.car.targetX - state.car.x) * 0.2;
+
+            for(let i=state.obstacles.length-1; i>=0; i--) {
+                const o = state.obstacles[i];
+                o.y += (2 + state.speed) * 2;
+
+                if(Math.abs(state.car.x - o.x) < 35 && Math.abs(o.y - (400-80)) < 30) {
+                    if(o.isCorrect) {
+                        state.score += 10; state.speed += 0.02;
+                    } else {
+                        state.lives--;
+                        dom.canvas.classList.add('shake'); setTimeout(() => dom.canvas.classList.remove('shake'), 500);
+                    }
+                    state.obstacles = [];
+                    if(state.lives <= 0) endGame();
+                    else setTimeout(newCarProblem, 300);
+                    break;
+                }
+                if(o.y > 450) state.obstacles.splice(i, 1);
+            }
+        }
+
+        function drawCar() {
+            const ctx = dom.canvas.getContext('2d');
+            ctx.clearRect(0,0,dom.canvas.width, 400);
+            
+            // Road lines
+            ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.setLineDash([30,30]);
+            [dom.canvas.width/3, (dom.canvas.width/3)*2].forEach(x => {
+                ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,400);
+                ctx.lineDashOffset = -state.roadOffset * 3; ctx.lineWidth = 4; ctx.stroke();
+            });
+
+            // Obstacles
+            state.obstacles.forEach(o => {
+                ctx.fillStyle = "white"; ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.beginPath(); ctx.roundRect(o.x-30, o.y-20, 60, 40, 12); ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#1e293b"; ctx.font = "black 24px Fredoka"; ctx.textAlign="center"; ctx.fillText(o.val, o.x, o.y+8);
+            });
+
+            // Player Car
+            const cy = 400-80;
+            ctx.fillStyle = "#22c55e"; ctx.beginPath(); ctx.roundRect(state.car.x-18, cy, 36, 60, 8); ctx.fill();
+            ctx.fillStyle = "#15803d"; ctx.fillRect(state.car.x-14, cy+10, 28, 15); // Windshield
+            ctx.fillStyle = "#fbbf24"; ctx.fillRect(state.car.x-15, cy, 8, 4); // Headlight L
+            ctx.fillRect(state.car.x+7, cy, 8, 4); // Headlight R
+        }
+
+        function updateCarUI() {
+            document.getElementById('car-score').innerText = state.score;
+            document.getElementById('car-lives').innerText = "❤️".repeat(state.lives);
+        }
+
+        function endGame() {
+            state.gameActive = false;
+            clearInterval(state.timerInterval);
+            cancelAnimationFrame(state.animationFrame);
+            document.getElementById('final-stats').innerText = `Du fikk totalt ${state.score} poeng!`;
+            generateHeatmap();
+            showScreen('result');
+            if(state.score > 20) createConfetti();
+        }
+
+        function generateHeatmap() {
+            dom.heatmap.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const cell = document.createElement('div');
+                cell.className = "heat-cell text-white font-black shadow-sm";
+                cell.innerText = `:${i}`;
+                const res = state.results[i];
+                if(!res) cell.classList.add('bg-slate-100', 'text-slate-300');
+                else {
+                    const ratio = res.correct / res.total;
+                    cell.classList.add(ratio === 1 ? 'bg-green-500' : ratio >= 0.5 ? 'bg-yellow-400' : 'bg-red-400');
+                }
+                dom.heatmap.appendChild(cell);
+            }
+        }
+
+        function createConfetti() {
+            for(let i=0; i<50; i++) {
+                const p = document.createElement('div'); p.className = 'confetti-piece';
+                p.style.left = Math.random()*100+'vw'; p.style.backgroundColor = `hsl(${Math.random()*360},80%,60%)`;
+                document.body.appendChild(p); setTimeout(() => p.remove(), 3000);
+            }
+        }
+
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                this.beginPath(); this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r);
+                this.closePath(); return this;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
