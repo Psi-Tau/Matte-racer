@@ -27,7 +27,6 @@
             height: 100vh;
         }
 
-        /* Sidepanel til venstre, Kart til høyre */
         .main-layout {
             display: grid;
             grid-template-columns: 320px 1fr;
@@ -78,7 +77,7 @@
         .country-path.active-hover {
             fill: var(--highlight);
             stroke: #854d0e;
-            stroke-width: 1.2;
+            stroke-width: 1.5;
             cursor: pointer;
         }
 
@@ -92,7 +91,6 @@
             stroke: #7f1d1d;
         }
 
-        /* Skjulte navn som dukker opp ved riktig svar */
         .country-label {
             font-size: 14px;
             font-weight: 700;
@@ -153,7 +151,6 @@
 <body>
 
     <div class="main-layout">
-        <!-- SIDEBAR (Overskrift, poeng og navn her) -->
         <aside class="sidebar flex flex-col h-full">
             <div class="p-6 pb-0">
                 <h1 class="text-2xl font-black tracking-tighter text-blue-600">Latin-Amerika</h1>
@@ -173,83 +170,87 @@
                 <div class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Landliste:</div>
             </div>
             
-            <div id="names-container" class="flex-grow overflow-y-auto custom-scroll px-6 pb-6 space-y-2">
-                <!-- Navn injiseres her -->
-            </div>
+            <div id="names-container" class="flex-grow overflow-y-auto custom-scroll px-6 pb-6 space-y-2"></div>
         </aside>
 
-        <!-- KART (Hele høyre side) -->
         <main class="map-area">
             <svg id="svg-map" viewBox="0 0 1000 1600" class="h-full w-auto">
                 <g id="countries-layer">
-                    <!-- MELLOM-AMERIKA -->
-                    <path id="mexico" d="M20,50 L200,50 L250,150 L220,250 L100,280 L50,200 Z" class="country-path" />
+                    <!-- MELLOM-AMERIKA (Oppdaterte stier for bedre treffområde) -->
+                    <!-- Mexico -->
+                    <path id="mexico" d="M20,50 L200,50 L250,150 L220,250 L180,260 L100,280 L50,200 Z" class="country-path" />
                     <text x="135" y="150" class="country-label" data-id="mexico">Mexico</text>
 
-                    <path id="guatemala" d="M100,280 L160,280 L180,330 L130,350 L90,320 Z" class="country-path" />
+                    <!-- Guatemala -->
+                    <path id="guatemala" d="M100,280 L180,260 L180,280 L195,330 L130,350 L90,320 Z" class="country-path" />
                     <text x="135" y="315" class="country-label" data-id="guatemala">Guatemala</text>
 
-                    <path id="belize" d="M160,280 L190,285 L195,315 L180,310 Z" class="country-path" />
-                    <text x="178" y="300" class="country-label" data-id="belize" style="font-size: 10px;">Belize</text>
+                    <!-- Belize (Forstørret treffområde) -->
+                    <path id="belize" d="M180,260 L220,270 L215,315 L180,310 L180,260 Z" class="country-path" />
+                    <text x="200" y="295" class="country-label" data-id="belize" style="font-size: 11px;">Belize</text>
 
-                    <path id="el_salvador" d="M130,350 L155,355 L160,375 L135,370 Z" class="country-path" />
-                    <text x="145" y="390" class="country-label" data-id="el_salvador" style="font-size: 8px;">El Salvador</text>
+                    <!-- El Salvador -->
+                    <path id="el_salvador" d="M130,350 L170,355 L175,395 L135,390 Z" class="country-path" />
+                    <text x="152" y="385" class="country-label" data-id="el_salvador" style="font-size: 8px;">El Salvador</text>
 
-                    <path id="honduras" d="M160,280 L230,290 L240,340 L180,330 Z" class="country-path" />
-                    <text x="210" y="320" class="country-label" data-id="honduras" style="font-size: 11px;">Honduras</text>
+                    <!-- Honduras -->
+                    <path id="honduras" d="M180,280 L250,290 L260,350 L195,330 Z" class="country-path" />
+                    <text x="220" y="320" class="country-label" data-id="honduras" style="font-size: 11px;">Honduras</text>
 
-                    <path id="nicaragua" d="M180,330 L240,340 L250,400 L195,410 L185,380 Z" class="country-path" />
-                    <text x="220" y="375" class="country-label" data-id="nicaragua">Nicaragua</text>
+                    <!-- Nicaragua -->
+                    <path id="nicaragua" d="M195,330 L260,350 L270,410 L210,420 L195,330 Z" class="country-path" />
+                    <text x="235" y="385" class="country-label" data-id="nicaragua">Nicaragua</text>
 
-                    <path id="costa_rica" d="M195,410 L250,400 L240,440 L210,450 Z" class="country-path" />
-                    <text x="220" y="425" class="country-label" data-id="costa_rica" style="font-size: 9px;">Costa Rica</text>
+                    <!-- Costa Rica -->
+                    <path id="costa_rica" d="M210,420 L270,410 L260,450 L220,460 Z" class="country-path" />
+                    <text x="240" y="445" class="country-label" data-id="costa_rica" style="font-size: 9px;">Costa Rica</text>
 
-                    <path id="panama" d="M210,450 L260,435 L300,450 L290,480 L210,480 Z" class="country-path" />
-                    <text x="255" y="470" class="country-label" data-id="panama" style="font-size: 10px;">Panama</text>
+                    <!-- Panama -->
+                    <path id="panama" d="M220,460 L280,445 L320,460 L310,490 L220,490 Z" class="country-path" />
+                    <text x="270" y="485" class="country-label" data-id="panama" style="font-size: 10px;">Panama</text>
 
                     <!-- SØR-AMERIKA -->
-                    <path id="colombia" d="M290,480 L350,470 L400,490 L440,540 L380,630 L320,630 L270,550 Z" class="country-path" />
-                    <text x="350" y="560" class="country-label" data-id="colombia">Colombia</text>
+                    <path id="colombia" d="M310,490 L370,480 L420,500 L460,550 L400,640 L340,640 L290,560 Z" class="country-path" />
+                    <text x="370" y="570" class="country-label" data-id="colombia">Colombia</text>
 
-                    <path id="venezuela" d="M400,490 L450,460 L540,450 L600,480 L620,530 L550,570 L440,540 Z" class="country-path" />
-                    <text x="500" y="510" class="country-label" data-id="venezuela">Venezuela</text>
+                    <path id="venezuela" d="M420,500 L470,470 L560,460 L620,490 L640,540 L570,580 L460,550 Z" class="country-path" />
+                    <text x="520" y="520" class="country-label" data-id="venezuela">Venezuela</text>
 
-                    <path id="guyana" d="M600,480 L660,485 L670,540 L620,530 Z" class="country-path" />
-                    <text x="635" y="510" class="country-label" data-id="guyana" style="font-size: 10px;">Guyana</text>
+                    <path id="guyana" d="M620,490 L680,495 L690,550 L640,540 Z" class="country-path" />
+                    <text x="655" y="520" class="country-label" data-id="guyana" style="font-size: 10px;">Guyana</text>
 
-                    <path id="surinam" d="M660,485 L710,495 L720,550 L670,540 Z" class="country-path" />
-                    <text x="690" y="525" class="country-label" data-id="surinam" style="font-size: 10px;">Surinam</text>
+                    <path id="surinam" d="M680,495 L730,505 L740,560 L690,550 Z" class="country-path" />
+                    <text x="710" y="535" class="country-label" data-id="surinam" style="font-size: 10px;">Surinam</text>
 
-                    <path id="fransk_guyana" d="M710,495 L750,505 L760,560 L720,550 Z" class="country-path" />
-                    <text x="735" y="540" class="country-label" data-id="fransk_guyana" style="font-size: 8px;">Fransk Guyana</text>
+                    <path id="fransk_guyana" d="M730,505 L770,515 L780,570 L740,560 Z" class="country-path" />
+                    <text x="755" y="550" class="country-label" data-id="fransk_guyana" style="font-size: 8px;">Fransk Guyana</text>
 
-                    <path id="ecuador" d="M240,610 L270,570 L340,630 L290,680 L230,650 Z" class="country-path" />
-                    <text x="280" y="635" class="country-label" data-id="ecuador" style="font-size: 10px;">Ecuador</text>
+                    <path id="ecuador" d="M260,620 L290,580 L360,640 L310,690 L250,660 Z" class="country-path" />
+                    <text x="300" y="645" class="country-label" data-id="ecuador" style="font-size: 10px;">Ecuador</text>
 
-                    <path id="peru" d="M230,650 L290,680 L340,630 L400,620 L440,680 L480,780 L400,850 L310,780 L210,680 Z" class="country-path" />
-                    <text x="320" y="730" class="country-label" data-id="peru">Peru</text>
+                    <path id="peru" d="M250,660 L310,690 L360,640 L420,630 L460,690 L500,790 L420,860 L330,790 L230,690 Z" class="country-path" />
+                    <text x="340" y="740" class="country-label" data-id="peru">Peru</text>
 
-                    <path id="bolivia" d="M440,680 L520,680 L580,750 L560,860 L460,880 L400,850 Z" class="country-path" />
-                    <text x="480" y="780" class="country-label" data-id="bolivia">Bolivia</text>
+                    <path id="bolivia" d="M460,690 L540,690 L600,760 L580,870 L480,890 L420,860 Z" class="country-path" />
+                    <text x="500" y="790" class="country-label" data-id="bolivia">Bolivia</text>
 
-                    <path id="brasil" d="M440,540 L550,570 L620,530 L670,540 L720,550 L760,560 L850,600 L950,700 L920,950 L800,1050 L700,1050 L650,980 L560,860 L580,750 L520,680 L440,680 Z" class="country-path" />
-                    <text x="680" y="780" class="country-label" data-id="brasil" style="font-size: 24px;">Brasil</text>
+                    <path id="brasil" d="M460,550 L570,580 L640,540 L690,550 L740,560 L780,570 L870,610 L970,710 L940,960 L820,1060 L720,1060 L670,990 L580,870 L600,760 L540,690 L460,690 Z" class="country-path" />
+                    <text x="700" y="790" class="country-label" data-id="brasil" style="font-size: 24px;">Brasil</text>
 
-                    <path id="paraguay" d="M560,860 L650,860 L670,950 L590,980 L560,940 Z" class="country-path" />
-                    <text x="610" y="920" class="country-label" data-id="paraguay" style="font-size: 11px;">Paraguay</text>
+                    <path id="paraguay" d="M580,870 L670,870 L690,960 L610,990 L580,950 Z" class="country-path" />
+                    <text x="630" y="930" class="country-label" data-id="paraguay" style="font-size: 11px;">Paraguay</text>
 
-                    <path id="uruguay" d="M660,1050 L740,1040 L760,1110 L680,1130 Z" class="country-path" />
-                    <text x="720" y="1090" class="country-label" data-id="uruguay" style="font-size: 10px;">Uruguay</text>
+                    <path id="uruguay" d="M680,1060 L760,1050 L780,1120 L700,1140 Z" class="country-path" />
+                    <text x="740" y="1100" class="country-label" data-id="uruguay" style="font-size: 10px;">Uruguay</text>
                     
-                    <path id="chile" d="M400,850 L460,880 L430,1000 L390,1200 L350,1400 L370,1550 L310,1550 L290,1400 L320,1200 L340,1000 L300,850 Z" class="country-path" />
-                    <text x="350" y="1150" class="country-label" data-id="chile" style="font-size: 14px; transform: rotate(90deg); transform-origin: 350px 1150px;">Chile</text>
+                    <path id="chile" d="M420,860 L480,890 L450,1010 L410,1210 L370,1410 L390,1560 L330,1560 L310,1410 L340,1210 L360,1010 L320,860 Z" class="country-path" />
+                    <text x="360" y="1160" class="country-label" data-id="chile" style="font-size: 14px; transform: rotate(90deg); transform-origin: 360px 1160px;">Chile</text>
                     
-                    <path id="argentina" d="M460,880 L560,860 L560,940 L590,980 L660,1050 L680,1130 L600,1400 L550,1550 L370,1550 L350,1400 L390,1200 L430,1000 Z" class="country-path" />
-                    <text x="480" y="1150" class="country-label" data-id="argentina">Argentina</text>
+                    <path id="argentina" d="M480,890 L580,870 L580,950 L610,990 L680,1060 L700,1140 L620,1410 L570,1560 L390,1560 L370,1410 L410,1210 L450,1010 Z" class="country-path" />
+                    <text x="500" y="1160" class="country-label" data-id="argentina">Argentina</text>
                 </g>
             </svg>
 
-            <!-- Win Overlay -->
             <div id="win-overlay" class="hidden absolute inset-0 bg-white/80 backdrop-blur-md flex items-center justify-center z-50 p-8">
                 <div class="bg-white p-12 rounded-[3rem] text-slate-900 text-center shadow-2xl border border-slate-100 max-w-sm">
                     <div class="text-6xl mb-4">🏆</div>
@@ -292,29 +293,23 @@
             const container = document.getElementById('names-container');
             container.innerHTML = '';
             
-            // Tilfeldig rekkefølge på landene i sidepanelet
             [...countries].sort(() => Math.random() - 0.5).forEach(country => {
                 const div = document.createElement('div');
                 div.className = 'draggable-name p-3 rounded-xl font-bold text-sm shadow-sm border border-slate-200';
                 div.textContent = country.name;
                 div.dataset.id = country.id;
-                
                 div.draggable = true;
                 div.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', country.id);
                     div.classList.add('opacity-30');
                 });
                 div.addEventListener('dragend', () => div.classList.remove('opacity-30'));
-
-                // Mobilstøtte
                 div.addEventListener('touchstart', handleTouchStart, {passive: false});
                 div.addEventListener('touchmove', handleTouchMove, {passive: false});
                 div.addEventListener('touchend', handleTouchEnd);
-
                 container.appendChild(div);
             });
 
-            // Setter opp kart-interaksjon
             document.querySelectorAll('.country-path').forEach(path => {
                 path.addEventListener('dragover', e => e.preventDefault());
                 path.addEventListener('dragenter', () => path.classList.add('active-hover'));
@@ -336,31 +331,21 @@
 
             if (draggedId === targetId) {
                 if (pathElement.classList.contains('is-correct')) return;
-                
-                // Marker land som korrekt
                 pathElement.classList.add('is-correct');
-                
-                // Vis navnet på kartet
                 const label = document.querySelector(`.country-label[data-id="${targetId}"]`);
                 if (label) label.classList.add('show');
-
                 score++;
                 document.getElementById('score-text').textContent = `${score} / ${countries.length}`;
-                
-                // Fjern fra sidepanelet
                 document.querySelectorAll('.draggable-name').forEach(el => {
                     if (el.dataset.id === draggedId) el.remove();
                 });
-
                 if (score === countries.length) win();
             } else {
-                // Feil land
                 pathElement.classList.add('is-wrong', 'shake');
                 setTimeout(() => pathElement.classList.remove('is-wrong', 'shake'), 500);
             }
         }
 
-        // --- Touch Logic ---
         let ghost = null;
         let currentTouchTarget = null;
 
@@ -376,7 +361,6 @@
         function handleTouchMove(e) {
             const touch = e.touches[0];
             updateGhostPos(touch);
-            
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
             document.querySelectorAll('.country-path').forEach(p => p.classList.remove('active-hover'));
             if (target && target.classList.contains('country-path')) {
@@ -388,9 +372,7 @@
         function handleTouchEnd(e) {
             if (ghost) {
                 const id = ghost.dataset.id;
-                if (currentTouchTarget) {
-                    checkMatch(id, currentTouchTarget.id);
-                }
+                if (currentTouchTarget) checkMatch(id, currentTouchTarget.id);
                 ghost.remove();
                 ghost = null;
                 currentTouchTarget = null;
